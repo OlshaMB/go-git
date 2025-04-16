@@ -10,6 +10,7 @@ import (
 	"github.com/go-git/go-git/v6/plumbing"
 	"github.com/go-git/go-git/v6/plumbing/storer"
 	"github.com/go-git/go-git/v6/utils/ioutil"
+	"github.com/go-git/go-git/v6/utils/sync"
 )
 
 var (
@@ -71,7 +72,7 @@ func (p *Parser) storeOrCache(oh *ObjectHeader) error {
 
 		defer w.Close()
 
-		_, err = io.Copy(w, bytes.NewReader(oh.content.Bytes()))
+		_, err = ioutil.Copy(w, &oh.content)
 		if err != nil {
 			return err
 		}

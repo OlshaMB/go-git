@@ -13,6 +13,7 @@ import (
 	gogithash "github.com/go-git/go-git/v6/plumbing/hash"
 	"github.com/go-git/go-git/v6/plumbing/storer"
 	"github.com/go-git/go-git/v6/utils/binary"
+	"github.com/go-git/go-git/v6/utils/ioutil"
 	gogitsync "github.com/go-git/go-git/v6/utils/sync"
 )
 
@@ -89,8 +90,7 @@ type Scanner struct {
 	storage storer.EncodedObjectStorer
 
 	*scannerReader
-	zr  gogitsync.ZLibReader
-	buf bytes.Buffer
+	zr gogitsync.ZLibReader
 }
 
 // NewScanner creates a new instance of Scanner.
@@ -191,7 +191,7 @@ func (r *Scanner) SeekFromStart(offset int64) error {
 
 func (s *Scanner) WriteObject(oh *ObjectHeader, writer io.Writer) error {
 	if oh.content.Len() > 0 {
-		_, err := io.Copy(writer, bytes.NewReader(oh.content.Bytes()))
+		_, err := ioutil.Copy(writer, &oh.content)
 		return err
 	}
 
@@ -226,7 +226,7 @@ func (s *Scanner) inflateContent(contentOffset int64, writer io.Writer) error {
 		return fmt.Errorf("zlib reset error: %s", err)
 	}
 
-	_, err = io.Copy(writer, s.zr.Reader)
+	_, err = ioutil.Copy(writer, s.zr.Reader)
 	if err != nil {
 		return err
 	}
@@ -399,7 +399,7 @@ func objectEntry(r *Scanner) (stateFn, error) {
 		}
 
 		// For non delta objects, simply calculate the hash of each object.
-		_, err = io.CopyBuffer(mw, r.zr.Reader, r.buf.Bytes())
+		_, err = ioutil.Copy(mw, r.zr.Reader)
 		if err != nil {
 			return nil, err
 		}
@@ -420,7 +420,7 @@ func objectEntry(r *Scanner) (stateFn, error) {
 		} else {
 			// We don't know the compressed length, so we can't seek to
 			// the next object, we must discard the data instead.
-			_, err = io.Copy(io.Discard, r.zr.Reader)
+			_, err = ioutil.Copy(io.Discard, r.zr.Reader)
 			if err != nil {
 				return nil, err
 			}
