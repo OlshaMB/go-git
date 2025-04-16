@@ -21,7 +21,7 @@ import (
 type contextKey string
 
 type service struct {
-	pattern  *regexp.Regexp
+	pattern *regexp.Regexp
 	method  string
 	handler http.HandlerFunc
 	svc     transport.Service
@@ -120,7 +120,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// If no service matched, return 404.
 	renderStatusError(w, http.StatusNotFound)
 }
-
 
 func serviceRpc(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -233,7 +232,7 @@ func sendFile(w http.ResponseWriter, r *http.Request, contentType string) {
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
 	w.Header().Set("Last-Modified", stat.ModTime().Format(http.TimeFormat))
-	io.Copy(w, f) //nolint:errcheck
+	ioutil.Copy(w, f) //nolint:errcheck
 }
 
 func getTextFile(w http.ResponseWriter, r *http.Request) {
