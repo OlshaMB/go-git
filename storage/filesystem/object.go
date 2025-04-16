@@ -155,7 +155,7 @@ func (s *ObjectStorage) SetEncodedObject(o plumbing.EncodedObject) (h plumbing.H
 		return plumbing.ZeroHash, err
 	}
 
-	if _, err = io.Copy(ow, or); err != nil {
+	if _, err = ioutil.Copy(ow, or); err != nil {
 		return plumbing.ZeroHash, err
 	}
 
@@ -447,14 +447,11 @@ func (s *ObjectStorage) getFromUnpacked(h plumbing.Hash) (obj plumbing.EncodedOb
 
 	defer ioutil.CheckClose(w, &err)
 
-	bufp := copyBufferPool.Get().(*[]byte)
-	buf := *bufp
-	_, err = io.CopyBuffer(w, r, buf)
-	copyBufferPool.Put(bufp)
-
-	s.objectCache.Put(obj)
-
-	return obj, err
+	_, err = ioutil.Copy(w, r)
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
 }
 
 var copyBufferPool = sync.Pool{
